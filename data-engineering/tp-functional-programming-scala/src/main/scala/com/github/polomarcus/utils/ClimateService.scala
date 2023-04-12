@@ -16,7 +16,11 @@ object ClimateService {
    * @param description "my awesome sentence contains a key word like climate change"
    * @return Boolean True
    */
-  def isClimateRelated(description: String): Boolean = ???
+  def isClimateRelated(description: String): Boolean = {
+    val keywords = List("global warming", "IPCC", "climate change")
+    keywords.exists(keyword => description.toLowerCase.contains(keyword.toLowerCase))
+  }
+
 
   /**
    * parse a list of raw data and transport it with type into a list of CO2Record
@@ -25,11 +29,43 @@ object ClimateService {
    * otherwise : None
    * you can access to Tuple with myTuple._1, myTuple._2, myTuple._3
    */
-  def parseRawData(list: List[(Int, Int, Double)]) : List[Option[CO2Record]] = {
-    list.map { record => ??? }
-    ???
+  // Updated parseRawData function to handle CO2 records using Option[T]
+  def parseRawData (list: List[(Int, Int, Double)]): List[Option[CO2Record]]
+  =
+  {
+    list.map {
+      case (year, month, value) =>
+        if (value == -99.99) None
+        else Some(CO2Record(year, month, value))
+    }
   }
 
+  // Function to find the min and max values in a list of CO2 records
+
+  def findMinMaxCO2(list: List[Option[CO2Record]]): (Option[Double], Option[Double]) = {
+    val filteredList = list.collect { case Some(record) => record.ppm }
+
+    if (filteredList.nonEmpty) {
+      (Some(filteredList.min), Some(filteredList.max))
+    } else {
+      (None, None)
+    }
+  }
+  def findMinMaxCO2ByYear(list: List[Option[CO2Record]], year: Int): (Option[Double], Option[Double]) = {
+    val filteredByYear = list.collect {
+      case Some(record) if record.year == year => record
+    }
+
+    findMinMaxCO2(filteredByYear.map(record => Some(record)))
+  }
+  // ClimateService.scala
+  def findDifferenceMinMaxCO2(list: List[Option[CO2Record]]): Option[Double] = {
+    val (min, max) = findMinMaxCO2(list)
+    (min, max) match {
+      case (Some(minValue), Some(maxValue)) => Some(maxValue - minValue)
+      case _ => None
+    }
+  }
   /**
    * remove all values from december (12) of every year
    *
