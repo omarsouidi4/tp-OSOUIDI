@@ -67,6 +67,9 @@ class ClimateServiceTest extends AnyFunSuite {
     assert(min.isEmpty)
     assert(max.isEmpty)
   }
+
+  import org.scalatest.matchers.should.Matchers._
+
   test("findDifferenceMinMaxCO2 - finds correct difference between min and max values") {
     val record1 = Some(CO2Record(2003, 1, 355.2))
     val record2 = Some(CO2Record(2003, 2, 358.9))
@@ -76,8 +79,10 @@ class ClimateServiceTest extends AnyFunSuite {
 
     val difference = ClimateService.findDifferenceMinMaxCO2(list)
 
-    assert(difference.contains(23.2))
+    // We want to check the value for the key 2003.
+    difference(2003).get shouldBe (3.7 +- 0.0001)
   }
+
 
   test("findDifferenceMinMaxCO2 - handles empty list") {
     val emptyList: List[Option[CO2Record]] = List()

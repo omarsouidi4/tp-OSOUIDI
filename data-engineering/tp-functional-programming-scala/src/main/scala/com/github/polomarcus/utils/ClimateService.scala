@@ -59,12 +59,18 @@ object ClimateService {
     findMinMaxCO2(filteredByYear.map(record => Some(record)))
   }
   // ClimateService.scala
-  def findDifferenceMinMaxCO2(list: List[Option[CO2Record]]): Option[Double] = {
-    val (min, max) = findMinMaxCO2(list)
-    (min, max) match {
-      case (Some(minValue), Some(maxValue)) => Some(maxValue - minValue)
-      case _ => None
-    }
+  def findDifferenceMinMaxCO2(list: List[Option[CO2Record]]): Map[Int, Option[Double]] = {
+    val validRecords = list.collect { case Some(record) => record }
+    val years = validRecords.map(_.year).distinct
+
+    years.map { year =>
+      val recordsOfYear = validRecords.filter(_.year == year)
+      val (min, max) = findMinMaxCO2(recordsOfYear.map(record => Some(record)))
+      (year, (min, max) match {
+        case (Some(minValue), Some(maxValue)) => Some(maxValue - minValue)
+        case _ => None
+      })
+    }.toMap
   }
   /**
    * remove all values from december (12) of every year
@@ -72,15 +78,16 @@ object ClimateService {
    * @param list
    * @return a list
    */
-  def filterDecemberData(list: List[Option[CO2Record]]) : List[CO2Record] = ???
+  def filterDecemberData(list: List[Option[CO2Record]]): List[CO2Record] = {
+    list.collect {
+      case Some(record) if record.month != 12 => record
+    }
+  }
 
 
   /**
    * **Tips**: look at the read me to find some tips for this function
    */
-  def getMinMax(list: List[CO2Record]) : (Double, Double) = ???
-
-  def getMinMaxByYear(list: List[CO2Record], year: Int) : (Double, Double) = ???
 
   /**
    * use this function side src/main/scala/com/polomarcus/main/Main (with sbt run)
@@ -91,9 +98,12 @@ object ClimateService {
    * @param list
    */
   def showCO2Data(list: List[Option[CO2Record]]): Unit = {
-    logger.info("Call ClimateService.filterDecemberData here")
+    val filteredList = ClimateService.filterDecemberData(list)
 
-    logger.info("Call record.show function here inside a map function")
+    filteredList.foreach(record => logger.info(record.show))
+
+    val noneCount = list.count(_.isEmpty)
+    logger.info(s"Number of None values: $noneCount")
   }
 
   /**
